@@ -36,7 +36,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method
    *   (and others in this file).
    */
-  num_particles = 10;  // Set the number of particles. NOTE_AV: changed from 0 to 10-100.
+  num_particles = 100;  // Set the number of particles.
 
   // Create a normal (Gaussian) distribution for x, y, and theta
   normal_distribution<double> dist_x(x, std[0]);
@@ -61,8 +61,8 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
    * TODO: Add measurements to each particle and add random Gaussian noise.
    * NOTE: When adding noise you may find std::normal_distribution
    *   and std::default_random_engine useful.
-   *  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
-   *  http://www.cplusplus.com/reference/random/default_random_engine/
+   *   http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
+   *   http://www.cplusplus.com/reference/random/default_random_engine/
    */
   double x, y, theta;
 
