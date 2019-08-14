@@ -55,6 +55,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
   is_initialized = true;
 }
 
+
 void ParticleFilter::prediction(double delta_t, double std_pos[],
                                 double velocity, double yaw_rate) {
   /**
@@ -113,6 +114,7 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
   }
 }
 
+
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
                                    const vector<LandmarkObs> &observations,
                                    const Map &map_landmarks) {
@@ -128,9 +130,68 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   https://www.willamette.edu/~gorr/classes/GeneralGraphics/Transforms/transforms2d.htm
    *   and the following is a good resource for the actual equation to implement
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
+   *
+   * Update Weights::
+   *   Step 1: Transformation
+   *   Step 2: Association
+   *   Step 3: Update Weights
    */
 
+  for (int i = 0; i < num_particles; ++i) {  // START iteration over particles.
+    double x_p, y_p, theta;
+    vector<LandmarkObs> landmarks_within_range;
+
+    x_p = particles[i].x;
+    y_p = particles[i].y;
+    theta = particles[i].theta;
+
+    // Find map landmarks within car's sensor range.
+    for (int j = 0; j < map_landmarks.landmark_list.size(); ++j) {  // START iteration over map_landmarks for each particle.
+      float x_m, y_m;
+      int id_m;
+      double rmse;
+
+      id_m = map_landmarks.landmark_list[j].id_i;
+      x_m = map_landmarks.landmark_list[j].x_f;
+      y_m = map_landmarks.landmark_list[j].y_f;
+      rmse = dist(x_p, y_p, x_m, y_m);
+      if (rmse <= sensor_range) {
+        landmarks_within_range.push_back(LandmarkObs {id_m, x_m, y_m});
+      }
+    }  // END map_landmarks for loop.
+
+    // Step 1: Transformation
+    vector<LandmarkObs> observations_map;
+    for (int j = 0; j < observations.size(); ++j) {  // START iteration over observations.
+      double x_o, y_o, x_m, y_m;
+      int id_o;
+
+      id_o = observations[j].id;
+      x_o = observations[j].x;
+      y_o = observations[j].y;
+      x_m = x_p + (x_o * cos(theta)) - (y_o * sin(theta));
+      y_m = y_p + (x_o * sin(theta)) + (y_o * cos(theta));
+      observations_map.push_back(LandmarkObs {id_o, x_m, y_m});
+    }  // END observations for loop.
+
+    // Step 2: Association
+    // Associate observations in map coordinates (i.e. Transformed observations) to
+    // map landmarks within car's sensor range for each particle.
+    dataAssociation(landmarks_within_range, observations_map);
+
+    // Step 3: Update Weights
+    for (int j = 0; j < observations_map.size(); ++j) {  // START iteration over observations in map coordinates.
+
+      for (int k = 0; k < landmarks_within_range.size(); ++k) {  // START iteration over map landmarks within car's sensor range.
+
+
+      }  // END landmarks_within_range for loop.
+
+    }  // END observations_map for loop.
+
+  }  // END num_particles for loop.
 }
+
 
 void ParticleFilter::resample() {
   /**
