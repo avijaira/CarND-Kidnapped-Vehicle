@@ -22,6 +22,11 @@ using std::string;
 using std::vector;
 using std::normal_distribution;  // NOTE_AV: added new
 
+
+// Random number generator
+static std::default_random_engine gen;
+
+
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
   /**
    * TODO: Set the number of particles. Initialize all particles to
@@ -31,9 +36,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method
    *   (and others in this file).
    */
-  std::default_random_engine gen;
-
-  num_particles = 10;  // Set the number of particles. NOTE_AV: changed from 0 to 10.
+  num_particles = 10;  // Set the number of particles. NOTE_AV: changed from 0 to 10-100.
 
   // Create a normal (Gaussian) distribution for x, y, and theta
   normal_distribution<double> dist_x(x, std[0]);
@@ -42,12 +45,14 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
   for (int i = 0; i < num_particles; ++i) {
     Particle p;
+    p.id = i;
     p.x = dist_x(gen);
     p.y = dist_y(gen);
     p.theta = dist_theta(gen);
-    p.weight = 1;
+    p.weight = 1.0;
     particles.push_back(p);
   }
+  is_initialized = true;
 }
 
 void ParticleFilter::prediction(double delta_t, double std_pos[],
@@ -59,22 +64,28 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
    *  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
    *  http://www.cplusplus.com/reference/random/default_random_engine/
    */
-  std::default_random_engine gen;
-  double x;
-  double y;
-  double theta;
+  double x, y, theta;
 
   for (int i = 0; i < num_particles; ++i) {
-    theta = particles[i].theta + (yaw_rate * delta_t);
-    x = particles[i].x + (velocity / yaw_rate) * (sin(theta) - sin(particles[i].theta));
-    y = particles[i].y + (velocity / yaw_rate) * (cos(particles[i].theta) - cos(theta));
+
+    if (fabs(yaw_rate) > 1e-5) {
+      // Turning, angular velocity is measurable.
+      theta = particles[i].theta + (yaw_rate * delta_t);
+      x = particles[i].x + (velocity / yaw_rate) * (sin(theta) - sin(particles[i].theta));
+      y = particles[i].y + (velocity / yaw_rate) * (cos(particles[i].theta) - cos(theta));
+    } else {
+      // Driving in a straight line.
+      theta = particles[i].theta;
+      x = particles[i].x + (velocity * delta_t) * cos(theta);
+      y = particles[i].y + (velocity * delta_t) * sin(theta);
+    }
 
     // Create a normal (Gaussian) distribution for x, y, and theta
     normal_distribution<double> dist_x(x, std_pos[0]);
     normal_distribution<double> dist_y(y, std_pos[1]);
     normal_distribution<double> dist_theta(theta, std_pos[2]);
 
-    particles[i].x = dist_x(gen);
+    particles[i].x = dist_x(gen);  // NOTE_AV: should it be 'x + dist_x(gen)'?
     particles[i].y = dist_y(gen);
     particles[i].theta = dist_theta(gen);
   }
@@ -90,7 +101,16 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
    *   probably find it useful to implement this method and use it as a helper
    *   during the updateWeights phase.
    */
+  double rmse;
+  double min_rmse;
+  int num_obs = predicted.size();
 
+  for (int i = 0; i < num_obs; ++i) {
+    rmse = dist(predicted[i].x, predicted[i].y, observations[i].x, observations[i].y)
+    if (min_rmse > rmse) {
+        min_rmse = rmse
+    }
+  }
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
