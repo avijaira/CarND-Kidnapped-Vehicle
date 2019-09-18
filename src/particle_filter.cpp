@@ -197,6 +197,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       id_om = observations_map[j].id;
       x_om = observations_map[j].x;
       y_om = observations_map[j].y;
+      x_ml = 0.0;
+      y_ml = 0.0;
 
       for (int k = 0; k < landmarks_within_range.size(); ++k) {  // START iteration over map landmarks within car's sensor range.
         if (id_om == landmarks_within_range[k].id) {
