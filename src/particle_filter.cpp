@@ -21,7 +21,8 @@
 using std::string;
 using std::vector;
 using std::normal_distribution;  // NOTE_AV: added new
-using std::discrete_distribution;  // NOTE_AV: added new
+using std::uniform_int_distribution;  // NOTE_AV: added new
+using std::uniform_real_distribution;  // NOTE_AV: added new
 
 
 // Random number generator
