@@ -74,13 +74,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
    */
   double x, y, theta;
 
-  // Create a normal (Gaussian) distribution for x, y, and theta
-  //normal_distribution<double> dist_x(0, std_pos[0]);
-  //normal_distribution<double> dist_y(0, std_pos[1]);
-  //normal_distribution<double> dist_theta(0, std_pos[2]);
-
   for (int i = 0; i < num_particles; ++i) {
-
     if (fabs(yaw_rate) > 1e-5) {
       // Turning, angular velocity is measurable.
       theta = particles[i].theta + (yaw_rate * delta_t);
@@ -116,14 +110,18 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
    *   during the updateWeights phase.
    */
   double rmse;
-  double min_rmse = std::numeric_limits<double>::max();
-  int num_obs = predicted.size();
+  int num_obs = observations.size();
+  int num_pred = predicted.size();
 
   for (int i = 0; i < num_obs; ++i) {
-    rmse = dist(predicted[i].x, predicted[i].y, observations[i].x, observations[i].y);
-    if (min_rmse > rmse) {
-        observations[i].id = predicted[i].id;  // Update an observation's id with nearest landmark's id.
+    double min_rmse = std::numeric_limits<double>::max();
+
+    for (int j = 0; j < num_pred; ++j) {
+      rmse = dist(predicted[j].x, predicted[j].y, observations[i].x, observations[i].y);
+      if (min_rmse > rmse) {
+        observations[i].id = predicted[j].id;  // Update an observation's id with nearest landmark's id.
         min_rmse = rmse;
+      }
     }
   }
 }
