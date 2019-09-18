@@ -146,6 +146,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   double std_x2 = 2 * std_x * std_x;
   double std_y2 = 2 * std_y * std_y;
 
+  double norm = 0.0;
+
   for (int i = 0; i < num_particles; ++i) {  // START iteration over particles.
     double x_p, y_p, theta;
     vector<LandmarkObs> landmarks_within_range;
@@ -214,15 +216,11 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     }  // END observations_map loop.
 
     particles[i].weight = likelihood;
+    norm += likelihood;  // Same as particles[i].weight
   }  // END num_particles loop.
 
-  // NOTE_AV: normalize particles' weight?
-  double norm = 0.0;
-  for (int j = 0; j < num_particles; ++j) {
-    norm += particles[j].weight;
-  }
+  // Normalize particles' weight
   norm += std::numeric_limits<double>::epsilon();
-
   for (int j = 0; j < num_particles; ++j) {
     particles[j].weight /= norm;
   }
@@ -247,10 +245,20 @@ void ParticleFilter::resample() {
     }
   }
 
-  std::discrete_distribution<int> weights_i(0, num_particles);
+  uniform_int_distribution<int> dist_index(0, num_particles - 1);
+  uniform_real_distribution<double> dist_weights(0.0, max_weight);
+
+  double beta = 0.0;  // Weight representation circle
+
+  int w_i = dist_index(gen);
   vector<Particle> resample_particles;
+
   for (int j = 0; j < num_particles; ++j) {
-    int w_i = weights_i(gen);
+    beta += 2.0 * dist_weights(gen);
+    while (beta > weights[w_i]) {
+      beta -= weights[w_i];
+      w_i = (w_i + 1) % num_particles;
+    }
     resample_particles.push_back(particles[w_i]);
   }
 
