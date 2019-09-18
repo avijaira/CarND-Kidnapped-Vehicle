@@ -217,6 +217,15 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   }  // END num_particles loop.
 
   // NOTE_AV: normalize particles' weight?
+  double norm = 0.0;
+  for (int j = 0; j < num_particles; ++j) {
+    norm += particles[j].weight;
+  }
+  norm += std::numeric_limits<double>::epsilon();
+
+  for (int j = 0; j < num_particles; ++j) {
+    particles[j].weight /= norm;
+  }
 }
 
 
@@ -248,6 +257,9 @@ void ParticleFilter::resample() {
   particles = resample_particles;
 
   // NOTE_AV: reset particle weights?
+  for (int j = 0; j < num_particles; ++j) {
+    particles[j].weight = 1.0;
+  }
 }
 
 void ParticleFilter::SetAssociations(Particle& particle,
