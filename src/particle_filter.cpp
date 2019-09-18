@@ -110,7 +110,7 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
   for (int i = 0; i < num_obs; ++i) {
     rmse = dist(predicted[i].x, predicted[i].y, observations[i].x, observations[i].y);
     if (min_rmse > rmse) {
-        observation[i].id = predicted[i].id;  // Update an observation's id with nearest landmark's id.
+        observations[i].id = predicted[i].id;  // Update an observation's id with nearest landmark's id.
         min_rmse = rmse;
     }
   }
