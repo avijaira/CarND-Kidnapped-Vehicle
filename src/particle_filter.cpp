@@ -87,9 +87,9 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
     normal_distribution<double> dist_y(y, std_pos[1]);
     normal_distribution<double> dist_theta(theta, std_pos[2]);
 
-    particles[i].x = dist_x(gen);  // NOTE_AV: should it be 'x + dist_x(gen)'?
-    particles[i].y = dist_y(gen);
-    particles[i].theta = dist_theta(gen);
+    particles[i].x += dist_x(gen);  // NOTE_AV: should it be 'x + dist_x(gen)'?
+    particles[i].y += dist_y(gen);
+    particles[i].theta += dist_theta(gen);
   }
 }
 
