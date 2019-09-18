@@ -21,6 +21,7 @@
 using std::string;
 using std::vector;
 using std::normal_distribution;  // NOTE_AV: added new
+using std::discrete_distribution;  // NOTE_AV: added new
 
 
 // Random number generator
@@ -109,6 +110,7 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
   for (int i = 0; i < num_obs; ++i) {
     rmse = dist(predicted[i].x, predicted[i].y, observations[i].x, observations[i].y)
     if (min_rmse > rmse) {
+        observation[i].id = predicted[i].id  // Update an observation's id with nearest landmark's id.
         min_rmse = rmse
     }
   }
@@ -137,6 +139,13 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   Step 3: Update Weights
    */
 
+  // Used in multivariate normal (Gaussian) distribution PDF (probability density function) calculation.
+  double std_x = std_landmark[0];
+  double std_y = std_landmark[1];
+  double divisor = 2 * M_PI * std_x * std_y;
+  double std_x2 = 2 * std_x * std_x;
+  double std_y2 = 2 * std_y * std_y;
+
   for (int i = 0; i < num_particles; ++i) {  // START iteration over particles.
     double x_p, y_p, theta;
     vector<LandmarkObs> landmarks_within_range;
@@ -147,32 +156,31 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
     // Find map landmarks within car's sensor range.
     for (int j = 0; j < map_landmarks.landmark_list.size(); ++j) {  // START iteration over map_landmarks for each particle.
-      float x_m, y_m;
-      int id_m;
-      double rmse;
+      double x_ml, y_ml, rmse;
+      int id_ml;
 
-      id_m = map_landmarks.landmark_list[j].id_i;
-      x_m = map_landmarks.landmark_list[j].x_f;
-      y_m = map_landmarks.landmark_list[j].y_f;
-      rmse = dist(x_p, y_p, x_m, y_m);
+      id_ml = map_landmarks.landmark_list[j].id_i;
+      x_ml = map_landmarks.landmark_list[j].x_f;
+      y_ml = map_landmarks.landmark_list[j].y_f;
+      rmse = dist(x_p, y_p, x_ml, y_ml);
       if (rmse <= sensor_range) {
-        landmarks_within_range.push_back(LandmarkObs {id_m, x_m, y_m});
+        landmarks_within_range.push_back(LandmarkObs {id_m, x_ml, y_ml});
       }
-    }  // END map_landmarks for loop.
+    }  // END map_landmarks loop.
 
     // Step 1: Transformation
     vector<LandmarkObs> observations_map;
     for (int j = 0; j < observations.size(); ++j) {  // START iteration over observations.
-      double x_o, y_o, x_m, y_m;
+      double x_o, y_o, x_om, y_om;
       int id_o;
 
       id_o = observations[j].id;
       x_o = observations[j].x;
       y_o = observations[j].y;
-      x_m = x_p + (x_o * cos(theta)) - (y_o * sin(theta));
-      y_m = y_p + (x_o * sin(theta)) + (y_o * cos(theta));
-      observations_map.push_back(LandmarkObs {id_o, x_m, y_m});
-    }  // END observations for loop.
+      x_om = x_p + (x_o * cos(theta)) - (y_o * sin(theta));
+      y_om = y_p + (x_o * sin(theta)) + (y_o * cos(theta));
+      observations_map.push_back(LandmarkObs {id_o, x_om, y_om});
+    }  // END observations loop.
 
     // Step 2: Association
     // Associate observations in map coordinates (i.e. Transformed observations) to
@@ -180,16 +188,33 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     dataAssociation(landmarks_within_range, observations_map);
 
     // Step 3: Update Weights
+    double likelihood = 1.0;
+
     for (int j = 0; j < observations_map.size(); ++j) {  // START iteration over observations in map coordinates.
+      double x_om, y_om, x_ml, y_ml;
+      int id_om;
+
+      id_om = observations_map[j].id;
+      x_om = observations_map[j].x;
+      y_om = observations_map[j].y;
 
       for (int k = 0; k < landmarks_within_range.size(); ++k) {  // START iteration over map landmarks within car's sensor range.
+        if (id_om == landmarks_within_range[k].id) {
+          x_ml = landmarks_within_range[k].x;
+          y_ml = landmarks_within_range[k].y;
+          break;
+        }
+      }  // END landmarks_within_range loop.
 
+      // Multivariate normal (Gaussian) distribution PDF (probability density function) calculation.
+      double exponent = pow(x_om - x_ml, 2) / std_x2 + pow(y_om - y_ml, 2) / std_y2;
+      likelihood *= exp(-exponent) / divisor;
+    }  // END observations_map loop.
 
-      }  // END landmarks_within_range for loop.
+    particles[i].weight = likelihood;
+  }  // END num_particles loop.
 
-    }  // END observations_map for loop.
-
-  }  // END num_particles for loop.
+  // NOTE_AV: normalize particles' weight?
 }
 
 
