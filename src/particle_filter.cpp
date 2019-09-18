@@ -104,7 +104,7 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
    *   during the updateWeights phase.
    */
   double rmse;
-  double min_rmse;
+  double min_rmse = std::numeric_limits<double>::max();
   int num_obs = predicted.size();
 
   for (int i = 0; i < num_obs; ++i) {
@@ -225,7 +225,27 @@ void ParticleFilter::resample() {
    * NOTE: You may find std::discrete_distribution helpful here.
    *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
    */
+  vector<double> weights;
+  double max_weight = std::numeric_limits<double>::min();
 
+  for (int j = 0; j < num_particles; ++j) {
+    double weight = particles[j].weight;
+    weights.push_back(weight);
+    if (weight > max_weight) {
+      max_weight = weight;
+    }
+  }
+
+  std::discrete_distribution<int> weights_i(0, num_particles);
+  vector<Particle> resample_particles;
+  for (int j = 0; j < num_particles; ++j) {
+    int w_i = weights_i(gen);
+    resample_particles.push_back(particles[w_i]);
+  }
+
+  particles = resample_particles;
+
+  // NOTE_AV: reset particle weights?
 }
 
 void ParticleFilter::SetAssociations(Particle& particle,
