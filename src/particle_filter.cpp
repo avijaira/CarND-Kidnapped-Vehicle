@@ -88,9 +88,9 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
     normal_distribution<double> dist_y(y, std_pos[1]);
     normal_distribution<double> dist_theta(theta, std_pos[2]);
 
-    particles[i].x = dist_x(gen);  // NOTE_AV: should it be 'x + dist_x(gen)'?
-    particles[i].y = dist_y(gen);
-    particles[i].theta = dist_theta(gen);
+    particles[i].x += dist_x(gen);  // NOTE_AV: should it be 'x + dist_x(gen)'?
+    particles[i].y += dist_y(gen);
+    particles[i].theta += dist_theta(gen);
   }
 }
 
@@ -252,7 +252,7 @@ void ParticleFilter::resample() {
   double beta = 0.0;  // Weight representation circle
 
   int w_i = dist_index(gen);
-  vector<Particle> resample_particles;
+  vector<Particle> re_particles;
 
   for (int j = 0; j < num_particles; ++j) {
     beta += 2.0 * dist_weights(gen);
@@ -260,10 +260,10 @@ void ParticleFilter::resample() {
       beta -= weights[w_i];
       w_i = (w_i + 1) % num_particles;
     }
-    resample_particles.push_back(particles[w_i]);
+    re_particles.push_back(particles[w_i]);
   }
 
-  particles = resample_particles;
+  particles = re_particles;
 
   // NOTE_AV: reset particle weights?
   //for (int j = 0; j < num_particles; ++j) {
