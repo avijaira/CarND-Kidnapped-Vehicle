@@ -164,7 +164,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
       y_ml = map_landmarks.landmark_list[j].y_f;
       rmse = dist(x_p, y_p, x_ml, y_ml);
       if (rmse <= sensor_range) {
-        landmarks_within_range.push_back(LandmarkObs {id_m, x_ml, y_ml});
+        landmarks_within_range.push_back(LandmarkObs {id_ml, x_ml, y_ml});
       }
     }  // END map_landmarks loop.
 
