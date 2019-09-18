@@ -38,6 +38,11 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method
    *   (and others in this file).
    */
+
+  if (is_initialized) {
+    return;
+  }
+
   num_particles = 100;  // Set the number of particles.
 
   // Create a normal (Gaussian) distribution for x, y, and theta
