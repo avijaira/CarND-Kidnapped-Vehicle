@@ -3,6 +3,9 @@
  *
  * Created on: Dec 12, 2016
  * Author: Tiffany Huang
+ *
+ * Modified on: Sep 19, 2019
+ * Modified by: Amit Vijairania
  */
 
 #include "particle_filter.h"
@@ -20,9 +23,9 @@
 
 using std::string;
 using std::vector;
-using std::normal_distribution;  // NOTE_AV: added new
-using std::uniform_int_distribution;  // NOTE_AV: added new
-using std::uniform_real_distribution;  // NOTE_AV: added new
+using std::normal_distribution;
+using std::uniform_int_distribution;
+using std::uniform_real_distribution;
 
 
 // Random number generator
@@ -286,11 +289,6 @@ void ParticleFilter::resample() {
   }
 
   particles = re_particles;
-
-  // NOTE_AV: reset particle weights?
-  //for (int j = 0; j < num_particles; ++j) {
-  //  particles[j].weight = 1.0;
-  //}
 }
 
 void ParticleFilter::SetAssociations(Particle& particle,
