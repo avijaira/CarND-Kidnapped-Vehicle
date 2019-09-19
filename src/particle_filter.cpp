@@ -46,9 +46,15 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
   num_particles = 100;  // Set the number of particles.
 
   // Create a normal (Gaussian) distribution for x, y, and theta
-  normal_distribution<double> dist_x(x, std[0]);
-  normal_distribution<double> dist_y(y, std[1]);
-  normal_distribution<double> dist_theta(theta, std[2]);
+  double std_x, std_y, std_t;
+
+  std_x = std[0];
+  std_y = std[1];
+  std_t = std[2];
+
+  normal_distribution<double> dist_x(x, std_x);
+  normal_distribution<double> dist_y(y, std_y);
+  normal_distribution<double> dist_theta(theta, std_t);
 
   for (int i = 0; i < num_particles; ++i) {
     Particle p;
@@ -72,29 +78,35 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
    *   http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
    *   http://www.cplusplus.com/reference/random/default_random_engine/
    */
-  double x, y, theta;
+  double std_x, std_y, std_t;
+
+  std_x = std_pos[0];
+  std_y = std_pos[1];
+  std_theta = std_pos[2];
 
   for (int i = 0; i < num_particles; ++i) {
+    double x, y, theta;
+
     if (fabs(yaw_rate) > 1e-5) {
       // Turning, angular velocity is measurable.
-      theta = particles[i].theta + (yaw_rate * delta_t);
-      x = particles[i].x + (velocity / yaw_rate) * (sin(theta) - sin(particles[i].theta));
-      y = particles[i].y + (velocity / yaw_rate) * (cos(particles[i].theta) - cos(theta));
+      theta = yaw_rate * delta_t;
+      x = (velocity / yaw_rate) * (sin(particles[i].theta + theta) - sin(particles[i].theta));
+      y = (velocity / yaw_rate) * (cos(particles[i].theta) - cos(particles[i].theta + theta));
     } else {
       // Driving in a straight line.
-      theta = particles[i].theta;
-      x = particles[i].x + (velocity * delta_t) * cos(theta);
-      y = particles[i].y + (velocity * delta_t) * sin(theta);
+      theta = 1e-5;
+      x = velocity * delta_t * cos(particles[i].theta);
+      y = velocity * delta_t * sin(particles[i].theta);
     }
 
     // Create a normal (Gaussian) distribution for x, y, and theta
-    normal_distribution<double> dist_x(x, std_pos[0]);
-    normal_distribution<double> dist_y(y, std_pos[1]);
-    normal_distribution<double> dist_theta(theta, std_pos[2]);
+    normal_distribution<double> dist_x(x, std_x);
+    normal_distribution<double> dist_y(y, std_y);
+    normal_distribution<double> dist_theta(theta, std_theta);
 
-    particles[i].x = x + dist_x(gen);  // NOTE_AV: should it be 'x + dist_x(gen)'?
-    particles[i].y = y + dist_y(gen);
-    particles[i].theta = theta + dist_theta(gen);
+    particles[i].x += dist_x(gen);
+    particles[i].y += dist_y(gen);
+    particles[i].theta += dist_theta(gen);
   }
 }
 
@@ -115,13 +127,14 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
 
   for (int i = 0; i < num_obs; ++i) {
     double min_rmse = std::numeric_limits<double>::max();
-
+    int id = -1;
     for (int j = 0; j < num_pred; ++j) {
       rmse = dist(predicted[j].x, predicted[j].y, observations[i].x, observations[i].y);
       if (min_rmse > rmse) {
-        observations[i].id = predicted[j].id;  // Update an observation's id with nearest landmark's id.
+        id = predicted[j].id;  // Update an observation's id with nearest landmark's id.
         min_rmse = rmse;
       }
+      observations[i].id = id;
     }
   }
 }
