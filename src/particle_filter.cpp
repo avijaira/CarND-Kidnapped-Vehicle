@@ -78,7 +78,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
    *   http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
    *   http://www.cplusplus.com/reference/random/default_random_engine/
    */
-  double std_x, std_y, std_t;
+  double std_x, std_y, std_theta;
 
   std_x = std_pos[0];
   std_y = std_pos[1];
